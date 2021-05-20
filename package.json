@@ -4,7 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint scripts/*.{m,}js tests/resources/*.mjs && prettier --list-different scripts/*.{m,}js tests/resources/*.mjs",
     "review-tests": "node --experimental-modules ./scripts/test-reviewer.mjs",
     "create-all-tests": "node ./scripts/create-all-tests.js",
     "update-reference": "node ./scripts/update-reference.js",
