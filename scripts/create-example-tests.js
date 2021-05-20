@@ -9,26 +9,63 @@ const csv = require('csv-parser');
 const readline = require('readline');
 const fs = require('fs');
 const beautify = require('json-beautify');
+const {resourceUsage} = require('process');
 
-const createExampleTests = function (directory) {
+/**
+ * @typedef CreateTestsOptions
+ * @property {string} [root]
+ * @property {string} source
+ * @property {string} [destination]
+ * @property {string} [resourceDirectory]
+ * @property {{[key: string]: string}} [keys]
+ * @property {string} [keysFilepath]
+ * @property {*} [support]
+ * @property {string} [supportFilepath]
+ */
+
+/**
+ * @param {CreateTestsOptions} param0
+ */
+const createExampleTests = function ({
+  source: directory,
+  destination,
+  root: rootDirectory,
+  resourceDirectory,
+  keysFilepath: keysFile,
+  supportFilepath: supportFile,
+}) {
   const validModes = ['reading', 'interaction', 'item'];
 
   const scriptDirectory = path.dirname(__filename);
-  const rootDirectory = scriptDirectory.split('scripts')[0];
-  const testDirectory = path.join(rootDirectory, directory);
-  const testDirectoryRelative = directory;
+  if (!rootDirectory) {
+    rootDirectory = scriptDirectory.split('scripts')[0];
+  }
 
-  const keysFile = path.join(rootDirectory, 'tests', 'resources', 'keys.mjs');
+  const testDirectory = path.join(rootDirectory, directory);
+  if (!destination) {
+    destination = path.join(rootDirectory, 'dist', directory);
+  }
+
+  if (!resourceDirectory) {
+    resourceDirectory = path.join(rootDirectory, 'tests', 'resources');
+  }
+  if (!keysFile) {
+    keysFile = path.join(rootDirectory, resourceDirectory, 'keys.mjs');
+  }
+  if (!supportFile) {
+    supportFile = path.join(rootDirectory, 'tests', 'support.json');
+  }
 
   const testsFile = path.join(testDirectory, 'data', 'tests.csv');
   const atCommandsFile = path.join(testDirectory, 'data', 'commands.csv');
   const referencesFile = path.join(testDirectory, 'data', 'references.csv');
   const javascriptDirectory = path.join(testDirectory, 'data', 'js');
-  const indexFile = path.join(testDirectory, 'index.html');
+
+  const indexFile = path.join(destination, 'index.html');
 
   const keyDefs = {};
 
-  const support = JSON.parse(fse.readFileSync(path.join(rootDirectory, 'tests', 'support.json')));
+  const support = JSON.parse(fse.readFileSync(supportFile));
   let allATKeys = [];
   let allATNames = [];
   support.ats.forEach(at => {
@@ -114,7 +151,7 @@ const createExampleTests = function (directory) {
   // Create AT commands file
 
   function createATCommandFile(cmds) {
-    const fname = path.join(testDirectory, 'commands.json');
+    const fname = path.join(destination, 'commands.json');
     let data = {};
 
     function addCommand(task, mode, at, key) {
@@ -344,8 +381,8 @@ const createExampleTests = function (directory) {
       'test-' + id + '-' + cleanTask(test.task).replace(/\s+/g, '-') + '-' + test.mode.trim().toLowerCase() + '.html';
     let testJSONFileName =
       'test-' + id + '-' + cleanTask(test.task).replace(/\s+/g, '-') + '-' + test.mode.trim().toLowerCase() + '.json';
-    let testFileAbsolute = path.join(testDirectory, testFileName);
-    let testJSONFileAbsolute = path.join(testDirectory, testJSONFileName);
+    let testFileAbsolute = path.join(destination, testFileName);
+    let testJSONFileAbsolute = path.join(destination, testJSONFileName);
 
     if (typeof test.setupScript === 'string') {
       let setupScript = test.setupScript.trim();
@@ -561,8 +598,10 @@ ${rows}
             .on('end', () => {
               console.log('Test CSV file successfully processed');
 
+              fse.mkdirpSync(destination);
+
               console.log('Deleting current test files...');
-              deleteFilesFromDirectory(testDirectory);
+              deleteFilesFromDirectory(destination);
 
               atCommands = createATCommandFile(atCommands);
 
