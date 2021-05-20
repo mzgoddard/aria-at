@@ -1,10 +1,12 @@
+/** @format */
+
 'use strict';
-const { createExampleTests } = require('./create-example-tests');
+const {createExampleTests} = require('./create-example-tests');
 
 const args = require('minimist')(process.argv.slice(2), {
   alias: {
     h: 'help',
-    i: 'initialize'  // future feature
+    i: 'initialize', // future feature
   },
 });
 
@@ -25,7 +27,7 @@ Default use:
 }
 
 if (args._.length !== 1) {
-  console.log("Command expects a directory name, please supply.");
+  console.log('Command expects a directory name, please supply.');
   process.exit();
 }
 

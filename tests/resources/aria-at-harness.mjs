@@ -1,11 +1,13 @@
+/** @format */
+
 import {commandsAPI} from './at-commands.mjs';
 
 const UNDESIRABLES = [
-  "Output is excessively verbose, e.g., includes redundant and/or irrelevant speech",
-  "Reading cursor position changed in an unexpected manner",
-  "Screen reader became extremely sluggish",
-  "Screen reader crashed",
-  "Browser crashed"
+  'Output is excessively verbose, e.g., includes redundant and/or irrelevant speech',
+  'Reading cursor position changed in an unexpected manner',
+  'Screen reader became extremely sluggish',
+  'Screen reader crashed',
+  'Browser crashed',
 ];
 
 const TEST_HTML_OUTLINE = `
@@ -93,16 +95,17 @@ export function initialize(newSupport, newCommandsData) {
 
   // Get the AT under test from the URL search params
   // set the showResults flag from the URL search params
-  let params = (new URL(document.location)).searchParams;
+  let params = new URL(document.location).searchParams;
   at = support.ats[0];
   for (const [key, value] of params) {
     if (key === 'at') {
       let requestedAT = value;
       if (commapi.isKnownAT(requestedAT)) {
         at = commapi.isKnownAT(requestedAT);
-      }
-      else {
-        errors.push(`Harness does not have commands for the requested assistive technology ('${requestedAT}'), showing commands for assistive technology '${at.name}' instead. To test '${requestedAT}', please contribute command mappings to this project.`);
+      } else {
+        errors.push(
+          `Harness does not have commands for the requested assistive technology ('${requestedAT}'), showing commands for assistive technology '${at.name}' instead. To test '${requestedAT}', please contribute command mappings to this project.`,
+        );
       }
     }
     if (key === 'showResults') {
@@ -128,14 +131,13 @@ function openTestPagePopup() {
   document.getElementById('open-test-page').disabled = true;
 
   // If the window is closed, re-enable open popup button
-  testPageWindow.onunload = function(event) {
+  testPageWindow.onunload = function (event) {
     window.setTimeout(() => {
       if (testPageWindow.closed) {
         testPageWindow = undefined;
         document.getElementById('open-test-page').disabled = false;
       }
     }, 100);
-
   };
 
   executeScriptInTestPage();
@@ -149,8 +151,9 @@ function putTestPageWindowIntoCorrectState() {
 function executeScriptInTestPage() {
   let setupTestPage = behavior.setupTestPage;
   if (setupTestPage) {
-    if (testPageWindow.location.origin !== window.location.origin // make sure the origin is the same, and prevent this from firing on an 'about' page
-        || testPageWindow.document.readyState !== 'complete'
+    if (
+      testPageWindow.location.origin !== window.location.origin || // make sure the origin is the same, and prevent this from firing on an 'about' page
+      testPageWindow.document.readyState !== 'complete'
     ) {
       window.setTimeout(() => {
         executeScriptInTestPage();
@@ -166,7 +169,7 @@ export function verifyATBehavior(atBehavior) {
   // This is temporary until transition is complete from multiple modes to one mode
   let mode = typeof atBehavior.mode === 'string' ? atBehavior.mode : atBehavior.mode[0];
 
-  let newBehavior = Object.assign({}, atBehavior, { mode: mode });
+  let newBehavior = Object.assign({}, atBehavior, {mode: mode});
   newBehavior.commands = commapi.getATCommands(mode, atBehavior.task, at);
 
   newBehavior.output_assertions = newBehavior.output_assertions ? newBehavior.output_assertions : [];
@@ -191,7 +194,7 @@ export function displayTestPageAndInstructions(testPage) {
   }
 
   document.querySelector('html').setAttribute('lang', 'en');
-  document.body.innerHTML = (TEST_HTML_OUTLINE);
+  document.body.innerHTML = TEST_HTML_OUTLINE;
   var style = document.createElement('style');
   style.innerHTML = PAGE_STYLES;
   document.head.appendChild(style);
@@ -202,10 +205,9 @@ export function displayTestPageAndInstructions(testPage) {
 }
 
 function displayInstructionsForBehaviorTest() {
-
   function getSetupInstructions() {
     let html = '';
-    for (let i = 0; i < (userInstructions.length - 1); i++) {
+    for (let i = 0; i < userInstructions.length - 1; i++) {
       html += `<li><em>${userInstructions[i]}</em></li>`;
     }
     return html;
@@ -219,14 +221,16 @@ function displayInstructionsForBehaviorTest() {
   const mode = behavior.mode;
   const modeInstructions = commapi.getModeInstructions(mode, at);
   const userInstructions = behavior.specific_user_instruction.split('|');
-  const lastInstruction = userInstructions[userInstructions.length-1];
+  const lastInstruction = userInstructions[userInstructions.length - 1];
   const commands = behavior.commands;
-  const assertions = behavior.output_assertions.map((a) => a[1]);
+  const assertions = behavior.output_assertions.map(a => a[1]);
   const additionalBehaviorAssertions = behavior.additional_assertions;
-  const setupScriptDescription = behavior.setup_script_description ? ` and runs a script that ${behavior.setup_script_description}.` : behavior.setup_script_description;
+  const setupScriptDescription = behavior.setup_script_description
+    ? ` and runs a script that ${behavior.setup_script_description}.`
+    : behavior.setup_script_description;
   // As a hack, special case mode instructions for VoiceOver for macOS until we support modeless tests.
   // ToDo: remove this when resolving issue #194
-  const modePhrase = at.name === "VoiceOver for macOS" ? "Describe " : `With ${at.name} in ${mode} mode, describe `;
+  const modePhrase = at.name === 'VoiceOver for macOS' ? 'Describe ' : `With ${at.name} in ${mode} mode, describe `;
 
   let instructionsEl = document.getElementById('instructions');
   instructionsEl.innerHTML = `
@@ -234,7 +238,9 @@ function displayInstructionsForBehaviorTest() {
 <p>${modePhrase} how ${at.name} behaves when performing task "${lastInstruction}"</p>
 <h2>Test instructions</h2>
 <ol aria-label="Instructions">
-  <li>Restore default settings for ${at.name}. For help, read <a href="https://github.com/w3c/aria-at/wiki/Configuring-Screen-Readers-for-Testing">Configuring Screen Readers for Testing</a>.</li>
+  <li>Restore default settings for ${
+    at.name
+  }. For help, read <a href="https://github.com/w3c/aria-at/wiki/Configuring-Screen-Readers-for-Testing">Configuring Screen Readers for Testing</a>.</li>
   <li>Activate the "Open test page" button below, which opens the example to test in a new window${setupScriptDescription}</li>
   <li id="mode-instructions-li"><em>${modeInstructions}</em></li>
   ${getSetupInstructions()}
@@ -244,15 +250,17 @@ function displayInstructionsForBehaviorTest() {
   </li>
 </ol>
 <h3>Success Criteria</h3>
-<p>To pass this test, ${at.name} needs to meet all the following assertions when each  specified command is executed:</p>
+<p>To pass this test, ${
+    at.name
+  } needs to meet all the following assertions when each  specified command is executed:</p>
 <ul id='assertions' aria-label="Assertions">
 </ul>
 `;
 
   // Hack to remove mode instructions for VoiceOver for macOS to get us by until we support modeless screen readers.
   // ToDo: remove this when resolving issue #194
-  if (at.name === "VoiceOver for macOS") {
-    let modeInstructionsEl= document.getElementById('mode-instructions-li');
+  if (at.name === 'VoiceOver for macOS') {
+    let modeInstructionsEl = document.getElementById('mode-instructions-li');
     modeInstructionsEl.parentNode.removeChild(modeInstructionsEl);
   }
 
@@ -276,7 +284,7 @@ function displayInstructionsForBehaviorTest() {
 
   let openButton = document.createElement('button');
   openButton.id = 'open-test-page';
-  openButton.innerText = "Open Test Page";
+  openButton.innerText = 'Open Test Page';
   openButton.addEventListener('click', openTestPagePopup);
   if (testPageWindow) {
     openButton.disabled = true;
@@ -358,16 +366,16 @@ Were there additional undesirable behaviors? <span class="required">(required)</
   <legend>Undesirable behaviors<span class="required"> (required)<span></legend>
 `;
 
-  for (let undesirable of UNDESIRABLES) {
-    const string = `
+    for (let undesirable of UNDESIRABLES) {
+      const string = `
       <input type="checkbox" value="${undesirable}" id="${undesirable}-${c}" class="undesirable-${c}" tabindex="-1" disabled>
       <label for="${undesirable}-${c}">${undesirable}</label>
       <br>
      `;
-    recordResults += string;
-  }
+      recordResults += string;
+    }
 
-  recordResults += `
+    recordResults += `
      <input type="checkbox" value="Other" id="undesirable-${c}-other" name="undesirable-${c}-other" class="undesirable-${c}" tabindex="-1">
      <label for="undesirable-${c}-other">Other</label>
      </br>
@@ -416,18 +424,21 @@ Were there additional undesirable behaviors? <span class="required">(required)</
   if (window.parent && window.parent.postMessage) {
     // results can be submitted by parent posting a message to the
     // iFrame with a data.type property of 'submit'
-    window.addEventListener('message', function(message) {
+    window.addEventListener('message', function (message) {
       if (!validateMessage(message, 'submit')) return;
       submitResult();
     });
 
     // send message to parent that test has loaded
-    window.parent.postMessage({
-      type: 'loaded',
-      data: {
-        testPageUri: testPageUri
-      }
-    }, '*');
+    window.parent.postMessage(
+      {
+        type: 'loaded',
+        data: {
+          testPageUri: testPageUri,
+        },
+      },
+      '*',
+    );
   }
 }
 
@@ -473,8 +484,7 @@ function handleOtherUndesirableInput(event) {
   let otherCheckbox = document.querySelector(`#undesirable-${cmd}-other`);
   if (event.target.value) {
     otherCheckbox.checked = true;
-  }
-  else {
+  } else {
     otherCheckbox.checked = false;
   }
 }
@@ -546,8 +556,7 @@ function setFocusToPreviousItem(checkbox) {
   if (index === 0) {
     checkboxNodes[checkboxes.length - 1].tabIndex = 0;
     checkboxNodes[checkboxes.length - 1].focus();
-  }
-  else {
+  } else {
     checkboxNodes[index - 1].tabIndex = 0;
     checkboxNodes[index - 1].focus();
   }
@@ -567,21 +576,18 @@ function setFocusToNextItem(checkbox) {
   if (index === checkboxes.length) {
     checkboxNodes[0].tabIndex = 0;
     checkboxNodes[0].focus();
-  }
-  else {
+  } else {
     checkboxNodes[index].tabIndex = 0;
     checkboxNodes[index].focus();
   }
 }
 
 function validateResults() {
-
   let focusEl;
   for (let c = 0; c < behavior.commands.length; c++) {
-
     // If there is no output recorded, mark the screen reader output as required
-   let outputParagraph = document.getElementById(`cmd-${c}-output`);
-   let cmdInput = outputParagraph.querySelector('textarea');
+    let outputParagraph = document.getElementById(`cmd-${c}-output`);
+    let cmdInput = outputParagraph.querySelector('textarea');
     if (!cmdInput.value) {
       focusEl = focusEl || cmdInput;
       outputParagraph.querySelector('.required').classList.add('highlight-required');
@@ -601,12 +607,10 @@ function validateResults() {
       if (!selectedRadio) {
         document.querySelector(`#assertion-${c}-${a} .required`).classList.add('highlight-required');
         focusEl = focusEl || document.getElementById(`pass-${c}-${a}`);
-      }
-      else {
+      } else {
         document.querySelector(`#assertion-${c}-${a} .required`).classList.remove('highlight-required');
       }
     }
-
 
     // Check that the "unexpected/additional problems" fieldset is filled out
     let problemRadio = document.querySelector(`input[name="problem-${c}"]:checked`);
@@ -614,13 +618,16 @@ function validateResults() {
     let otherSelected = document.querySelector(`#undesirable-${c}-other:checked`);
     let otherText = document.querySelector(`#undesirable-${c}-other-input`).value;
     if (!problemRadio || (problemRadio.classList.contains('fail') && problemSelected.length === 0 && !otherSelected)) {
-        undesirableFieldset.classList.add('highlight-required');
+      undesirableFieldset.classList.add('highlight-required');
     }
     if (!problemRadio || (problemRadio.classList.contains('fail') && problemSelected.length === 0 && !otherSelected)) {
       document.querySelector(`#cmd-${c}-problem legend .required`).classList.add('highlight-required');
       focusEl = focusEl || document.querySelector(`#cmd-${c}-problem input[type="checkbox"]`);
-    }
-    else if (document.querySelector(`input#problem-${c}-false:checked`) || (problemRadio && problemSelected.length > 0) || (otherSelected && otherText)) {
+    } else if (
+      document.querySelector(`input#problem-${c}-false:checked`) ||
+      (problemRadio && problemSelected.length > 0) ||
+      (otherSelected && otherText)
+    ) {
       document.querySelector(`#cmd-${c}-problem legend .required`).classList.remove('highlight-required');
       undesirableFieldset.classList.remove('highlight-required');
     }
@@ -630,8 +637,7 @@ function validateResults() {
         document.querySelector(`#cmd-${c}-problem .required-other`).classList.add('highlight-required');
         undesirableFieldset.classList.add('highlight-required');
         focusEl = focusEl || document.querySelector(`#undesirable-${c}-other-input`);
-      }
-      else {
+      } else {
         document.querySelector(`#cmd-${c}-problem .required-other`).classList.remove('highlight-required');
         undesirableFieldset.classList.remove('highlight-required');
       }
@@ -644,7 +650,6 @@ function validateResults() {
   }
   return true;
 }
-
 
 function submitResult(event) {
   if (!validateResults()) {
@@ -665,7 +670,7 @@ function submitResult(event) {
   const summary = {
     1: {pass: 0, fail: 0},
     2: {pass: 0, fail: 0},
-    unexpectedCount: 0
+    unexpectedCount: 0,
   };
 
   overallStatus = 'PASS';
@@ -673,7 +678,6 @@ function submitResult(event) {
   const commandResults = [];
 
   for (let c = 0; c < behavior.commands.length; c++) {
-
     let assertions = [];
     let support = 'FULL';
     let totalAssertions = document.querySelectorAll(`#cmd-${c} tr`).length - 1;
@@ -688,14 +692,13 @@ function submitResult(event) {
 
       let assertionResult = {
         assertion,
-        priority
+        priority,
       };
 
       if (pass) {
         assertionResult.pass = result;
         summary[priority].pass++;
-      }
-      else {
+      } else {
         assertionResult.fail = result;
         summary[priority].fail++;
 
@@ -720,8 +723,7 @@ function submitResult(event) {
       summary.unexpectedCount++;
       if (problemEl.value === 'Other') {
         unexpected.push(document.querySelector(`#undesirable-${c}-other-input`).value);
-      }
-      else {
+      } else {
         unexpected.push(problemEl.value);
       }
     }
@@ -731,7 +733,7 @@ function submitResult(event) {
       output: document.querySelector(`#speechoutput-${c}`).value,
       unexpected_behaviors: unexpected,
       support,
-      assertions
+      assertions,
     });
   }
 
@@ -740,21 +742,24 @@ function submitResult(event) {
     specific_user_instruction: behavior.specific_user_instruction,
     task: behavior.task,
     commands: commandResults,
-    summary
+    summary,
   };
 
   let data = {
     test: document.title,
     details: behaviorResults,
-    status: overallStatus
+    status: overallStatus,
   };
 
   // send message to parent if test is loaded in iFrame
   if (window.parent && window.parent.postMessage) {
-    window.parent.postMessage({
-      type: 'results',
-      data: data
-    }, '*');
+    window.parent.postMessage(
+      {
+        type: 'results',
+        data: data,
+      },
+      '*',
+    );
   }
 
   endTest();
@@ -765,7 +770,6 @@ function submitResult(event) {
 
   appendJSONResults(data);
 }
-
 
 function showResultsTable() {
   let resulthtml = `<h1>${document.title}</h1><h2 id=overallstatus></h2>`;
@@ -779,27 +783,25 @@ function showResultsTable() {
   `;
 
   for (let command of behaviorResults.commands) {
-
-      let passingAssertions = '';
-      let failingAssertions = '';
-      for (let assertion of command.assertions) {
-        if (assertion.pass) {
-          passingAssertions += `<li>${assertion.assertion}</li>`;
-        }
-        if (assertion.fail) {
-          failingAssertions += `<li>${assertion.assertion}</li>`;
-        }
+    let passingAssertions = '';
+    let failingAssertions = '';
+    for (let assertion of command.assertions) {
+      if (assertion.pass) {
+        passingAssertions += `<li>${assertion.assertion}</li>`;
       }
-      let unexpectedBehaviors = '';
-      for (let unexpected of command.unexpected_behaviors) {
-        unexpectedBehaviors += `<li>${unexpected}</li>`;
+      if (assertion.fail) {
+        failingAssertions += `<li>${assertion.assertion}</li>`;
       }
-      passingAssertions = passingAssertions === '' ? '<li>No passing assertions.</li>' : passingAssertions;
-      failingAssertions = failingAssertions === '' ? '<li>No failing assertions.</li>' : failingAssertions;
-      unexpectedBehaviors = unexpectedBehaviors === '' ? '<li>No unexpect behaviors.</li>' : unexpectedBehaviors;
+    }
+    let unexpectedBehaviors = '';
+    for (let unexpected of command.unexpected_behaviors) {
+      unexpectedBehaviors += `<li>${unexpected}</li>`;
+    }
+    passingAssertions = passingAssertions === '' ? '<li>No passing assertions.</li>' : passingAssertions;
+    failingAssertions = failingAssertions === '' ? '<li>No failing assertions.</li>' : failingAssertions;
+    unexpectedBehaviors = unexpectedBehaviors === '' ? '<li>No unexpect behaviors.</li>' : unexpectedBehaviors;
 
-
-      resulthtml+= `
+    resulthtml += `
 <tr>
   <td>${command.command}</td>
   <td>${command.support}</td>
@@ -823,8 +825,7 @@ function showResultsTable() {
   </td>
 </tr>
 `;
-
-    }
+  }
 
   resulthtml += `</table>`;
 
@@ -840,7 +841,7 @@ function endTest() {
 
 function showUserError() {
   if (errors.length) {
-    document.getElementById('errors').style.display = "block";
+    document.getElementById('errors').style.display = 'block';
     let errorListEl = document.querySelector('#errors ul');
     for (let error of errors) {
       let errorMsgEl = document.createElement('li');
@@ -851,9 +852,9 @@ function showUserError() {
 }
 
 function appendJSONResults(data) {
-  var results_element = document.createElement("script");
-  results_element.type = "text/json";
-  results_element.id = "__ariaatharness__results__";
+  var results_element = document.createElement('script');
+  results_element.type = 'text/json';
+  results_element.id = '__ariaatharness__results__';
   results_element.textContent = JSON.stringify(data);
 
   document.body.appendChild(results_element);

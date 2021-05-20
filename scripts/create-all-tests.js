@@ -1,6 +1,8 @@
+/** @format */
+
 const path = require('path');
 const fs = require('fs');
-const { createExampleTests } = require('./create-example-tests');
+const {createExampleTests} = require('./create-example-tests');
 
 const scriptDirectory = path.dirname(__filename);
 const rootDirectory = scriptDirectory.split('scripts')[0];
