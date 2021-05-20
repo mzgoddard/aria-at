@@ -7,7 +7,8 @@
     "lint": "eslint .",
     "review-tests": "node --experimental-modules ./scripts/test-reviewer.mjs",
     "create-all-tests": "node ./scripts/create-all-tests.js",
-    "update-reference": "node ./scripts/update-reference.js"
+    "update-reference": "node ./scripts/update-reference.js",
+    "prepare": "husky install"
   },
   "dependencies": {
     "csv-parser": "^2.3.2",
@@ -22,7 +23,10 @@
   },
   "devDependencies": {
     "eslint": "^6.1.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.18.2",
+    "husky": "^6.0.0",
+    "lint-staged": "^11.0.0",
+    "prettier": "^2.3.0"
   },
   "repository": {
     "type": "git",
@@ -33,5 +37,9 @@
   "bugs": {
     "url": "https://github.com/w3c/aria-at/issues"
   },
-  "homepage": "https://github.com/w3c/aria-at#readme"
+  "homepage": "https://github.com/w3c/aria-at#readme",
+  "lint-staged": {
+    "*.js": "eslint --cache --fix",
+    "*.m?js": "prettier --write"
+  }
 }
