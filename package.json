@@ -39,7 +39,6 @@
   },
   "homepage": "https://github.com/w3c/aria-at#readme",
   "lint-staged": {
-    "*.js": "eslint --cache --fix",
-    "*.m?js": "prettier --write"
+    "{scripts/,tests/resources/}*.{m,}js": ["eslint --cache --cache-location node_modules/.cache/.eslintcache --fix", "prettier --write"]
   }
 }
