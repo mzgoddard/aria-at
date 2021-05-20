@@ -3,25 +3,41 @@
 'use strict';
 const {createExampleTests} = require('./create-example-tests');
 
-const args = require('minimist')(process.argv.slice(2), {
+const minimist = require('minimist');
+const args = minimist(process.argv.slice(2), {
+  string: ['outDir'],
+  default: {
+    outDir: '',
+  },
   alias: {
     h: 'help',
     i: 'initialize', // future feature
+    o: 'outDir',
   },
 });
 
 if (args.help) {
   console.log(`
 Default use:
-  node create-tests.js directory
+  node create-tests.js ...directories
     Will create tests from information in the [path to test files]/data/ directory
     The data directory needs to have the following CSV files:
-      at-commands.csv
+      commands.csv
       references.csv
       test.csv
+
+  Examples:
+    node create-tests.js tests/checkbox
+    node create-tests.js tests/*
+    node create-tests.js --outDir dist tests/*
+
   Arguments:
+    ...directories
+      Directories to read tests from.
     -h, --help
-       Show this message.
+      Show this message.
+    -o, --outDir
+      Directory to generate tests in.
 `);
   process.exit();
 }
@@ -31,4 +47,4 @@ if (args._.length !== 1) {
   process.exit();
 }
 
-createExampleTests(args._[0]);
+args._.map(source => createExampleTests({testPlan: source, outputDirectory: args.outDir}));

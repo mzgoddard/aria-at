@@ -1,71 +1,53 @@
 /** @format */
 
 'use strict';
-const path = require('path');
-const fse = require('fs-extra');
-const inquirer = require('inquirer');
-const util = require('util');
-const csv = require('csv-parser');
-const readline = require('readline');
 const fs = require('fs');
+const path = require('path');
+
 const beautify = require('json-beautify');
-const {resourceUsage} = require('process');
+const csv = require('csv-parser');
+const fse = require('fs-extra');
 
 /**
  * @typedef CreateTestsOptions
- * @property {string} [root]
- * @property {string} source
- * @property {string} [destination]
+ * @property {string} [rootDirectory]
+ * @property {string} testPlan
+ * @property {string} [outputDirectory]
  * @property {string} [resourceDirectory]
- * @property {{[key: string]: string}} [keys]
- * @property {string} [keysFilepath]
- * @property {*} [support]
- * @property {string} [supportFilepath]
+ * @property {string} [keysFilePath]
+ * @property {string} [supportFilePath]
  */
 
 /**
  * @param {CreateTestsOptions} param0
  */
 const createExampleTests = function ({
-  source: directory,
-  destination,
-  root: rootDirectory,
-  resourceDirectory,
-  keysFilepath: keysFile,
-  supportFilepath: supportFile,
+  rootDirectory = path.dirname(__dirname),
+  testPlan,
+  outputDirectory = '',
+  resourceDirectory = path.join('tests', 'resources'),
+  keysFilePath = 'keys.mjs',
+  supportFilePath = path.join('tests', 'support.json'),
 }) {
   const validModes = ['reading', 'interaction', 'item'];
 
-  const scriptDirectory = path.dirname(__filename);
-  if (!rootDirectory) {
-    rootDirectory = scriptDirectory.split('scripts')[0];
-  }
+  const testPlanDirectory = path.resolve(rootDirectory, testPlan);
+  outputDirectory = path.resolve(rootDirectory, outputDirectory);
+  const outputTestPlanDirectory = path.join(outputDirectory, testPlan);
+  resourceDirectory = path.resolve(rootDirectory, resourceDirectory);
+  keysFilePath = path.resolve(resourceDirectory, keysFilePath);
+  supportFilePath = path.resolve(rootDirectory, supportFilePath);
 
-  const testDirectory = path.join(rootDirectory, directory);
-  if (!destination) {
-    destination = path.join(rootDirectory, 'dist', directory);
-  }
+  const testsFilePath = path.join(testPlanDirectory, 'data', 'tests.csv');
+  const atCommandsFilePath = path.join(testPlanDirectory, 'data', 'commands.csv');
+  const referencesFilePath = path.join(testPlanDirectory, 'data', 'references.csv');
+  const javascriptDirectory = path.join(testPlanDirectory, 'data', 'js');
 
-  if (!resourceDirectory) {
-    resourceDirectory = path.join(rootDirectory, 'tests', 'resources');
-  }
-  if (!keysFile) {
-    keysFile = path.join(rootDirectory, resourceDirectory, 'keys.mjs');
-  }
-  if (!supportFile) {
-    supportFile = path.join(rootDirectory, 'tests', 'support.json');
-  }
-
-  const testsFile = path.join(testDirectory, 'data', 'tests.csv');
-  const atCommandsFile = path.join(testDirectory, 'data', 'commands.csv');
-  const referencesFile = path.join(testDirectory, 'data', 'references.csv');
-  const javascriptDirectory = path.join(testDirectory, 'data', 'js');
-
-  const indexFile = path.join(destination, 'index.html');
+  const indexOutputFilePath = path.join(outputTestPlanDirectory, 'index.html');
 
   const keyDefs = {};
 
-  const support = JSON.parse(fse.readFileSync(supportFile));
+  const support = JSON.parse(fse.readFileSync(supportFilePath));
   let allATKeys = [];
   let allATNames = [];
   support.ats.forEach(at => {
@@ -76,30 +58,30 @@ const createExampleTests = function ({
   const validAppliesTo = ['Screen Readers', 'Desktop Screen Readers'].concat(allATKeys);
 
   try {
-    fse.statSync(testDirectory);
+    fse.statSync(testPlanDirectory);
   } catch (err) {
-    console.log("The test directory '" + testDirectory + "' does not exist. Check the path to tests.");
+    console.log("The test directory '" + testPlanDirectory + "' does not exist. Check the path to tests.");
     process.exit();
   }
 
   try {
-    fse.statSync(testsFile);
+    fse.statSync(testsFilePath);
   } catch (err) {
-    console.log("The tests.csv file does not exist. Please create '" + testsFile + "' file.");
+    console.log("The tests.csv file does not exist. Please create '" + testsFilePath + "' file.");
     process.exit();
   }
 
   try {
-    fse.statSync(atCommandsFile);
+    fse.statSync(atCommandsFilePath);
   } catch (err) {
-    console.log("The at-commands.csv file does not exist. Please create '" + atCommandsFile + "' file.");
+    console.log("The at-commands.csv file does not exist. Please create '" + atCommandsFilePath + "' file.");
     process.exit();
   }
 
   try {
-    fse.statSync(referencesFile);
+    fse.statSync(referencesFilePath);
   } catch (err) {
-    console.log("The references.csv file does not exist. Please create '" + referencesFile + "' file.");
+    console.log("The references.csv file does not exist. Please create '" + referencesFilePath + "' file.");
     process.exit();
   }
 
@@ -107,7 +89,7 @@ const createExampleTests = function ({
 
   try {
     // read contents of the file
-    const keys = fs.readFileSync(keysFile, 'UTF-8');
+    const keys = fs.readFileSync(keysFilePath, 'UTF-8');
 
     // split the contents by new line
     const lines = keys.split(/\r?\n/);
@@ -115,7 +97,7 @@ const createExampleTests = function ({
     // print all lines
     lines.forEach(line => {
       let parts1 = line.split(' ');
-      let parts2 = line.split('"');
+      let parts2 = line.split(/'|"/g);
 
       if (parts1.length > 3) {
         let code = parts1[2].trim();
@@ -124,6 +106,7 @@ const createExampleTests = function ({
     });
   } catch (err) {
     console.error(err);
+    process.exit(1);
   }
 
   // delete test files
@@ -151,7 +134,7 @@ const createExampleTests = function ({
   // Create AT commands file
 
   function createATCommandFile(cmds) {
-    const fname = path.join(destination, 'commands.json');
+    const fname = path.join(outputTestPlanDirectory, 'commands.json');
     let data = {};
 
     function addCommand(task, mode, at, key) {
@@ -381,8 +364,8 @@ const createExampleTests = function ({
       'test-' + id + '-' + cleanTask(test.task).replace(/\s+/g, '-') + '-' + test.mode.trim().toLowerCase() + '.html';
     let testJSONFileName =
       'test-' + id + '-' + cleanTask(test.task).replace(/\s+/g, '-') + '-' + test.mode.trim().toLowerCase() + '.json';
-    let testFileAbsolute = path.join(destination, testFileName);
-    let testJSONFileAbsolute = path.join(destination, testJSONFileName);
+    let testFileAbsolute = path.join(outputTestPlanDirectory, testFileName);
+    let testJSONFileAbsolute = path.join(outputTestPlanDirectory, testJSONFileName);
 
     if (typeof test.setupScript === 'string') {
       let setupScript = test.setupScript.trim();
@@ -552,7 +535,7 @@ ${rows}
 </body>
 `;
 
-    fse.writeFileSync(indexFile, indexHTML, 'utf8');
+    fse.writeFileSync(indexOutputFilePath, indexHTML, 'utf8');
   }
 
   // Process CSV files
@@ -574,7 +557,7 @@ ${rows}
     errors += '[Command]: The key reference "' + key + '" is invalid for the "' + task + '" task.\n';
   }
 
-  fs.createReadStream(referencesFile)
+  fs.createReadStream(referencesFilePath)
     .pipe(csv())
     .on('data', row => {
       refs[row.refId] = row.value.trim();
@@ -582,7 +565,7 @@ ${rows}
     .on('end', () => {
       console.log('References CSV file successfully processed');
 
-      fs.createReadStream(atCommandsFile)
+      fs.createReadStream(atCommandsFilePath)
         .pipe(csv())
         .on('data', row => {
           atCommands.push(row);
@@ -590,7 +573,7 @@ ${rows}
         .on('end', () => {
           console.log('Commands CSV file successfully processed');
 
-          fs.createReadStream(testsFile)
+          fs.createReadStream(testsFilePath)
             .pipe(csv())
             .on('data', row => {
               tests.push(row);
@@ -598,10 +581,10 @@ ${rows}
             .on('end', () => {
               console.log('Test CSV file successfully processed');
 
-              fse.mkdirpSync(destination);
+              fse.mkdirpSync(outputTestPlanDirectory);
 
               console.log('Deleting current test files...');
-              deleteFilesFromDirectory(destination);
+              deleteFilesFromDirectory(outputTestPlanDirectory);
 
               atCommands = createATCommandFile(atCommands);
 
